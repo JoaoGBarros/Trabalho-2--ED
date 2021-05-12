@@ -17,4 +17,4 @@ void ImprimeArvore(FILE *dot, Arvore* a, char* sinais, char* numeros, int * cont
 float LeECalculaArvore(Arvore* a, float res, char* sinais);
 void DestroiArvore(Arvore* a);
 
-#endif
+#endif /*Arvore.h */
