@@ -1,3 +1,13 @@
+/*
+    Arvore.c
+    Trabalho II - Estrutura de Dados UFES 2020/2 - Patricia Dockhorn Costa
+    Alunos: Joao Gabriel de Barros e Tales Viana
+    Data: 28/04/2021
+    github: JoaoGBarros || Talesvf
+*/
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,14 +16,15 @@
 
 struct arvore{
     char* valor;
+    int id;
     Arvore* direita;
     Arvore* esquerda;
 };
 
-static char Busca(char c, char* sinais){
+static char Busca(char c, char* string){
     // Busca na string recebida o caracter c, caso o encontre, ele eh retornado, se nao eh retornado o char 'n'
-    for(int i = 0; i < strlen(sinais); i++){
-        if(c == sinais[i]){
+    for(int i = 0; i < strlen(string); i++){
+        if(c == string[i]){
             return c;
         }
     }
@@ -26,14 +37,15 @@ static Arvore* CriaArvoreVazia(){
 
     arv = (Arvore*)malloc(sizeof(Arvore));
     arv->valor = NULL;
+    arv->id = 0;
     arv->direita = NULL;
     arv->esquerda = NULL;
 
     return arv;
 }
 
-
-Arvore* CriaArvore(char* equacao, char* sinais, char* numeros, int* i){
+//((((5)-(3))*((4)/(1)))+(10))
+Arvore* CriaArvore(char* equacao, char* sinais, char* numeros, int* i, int *qtd){
     Arvore *arvore;
     int cont = 1;
     char b;
@@ -43,6 +55,8 @@ Arvore* CriaArvore(char* equacao, char* sinais, char* numeros, int* i){
     a[3] = '\0';
     a[4] = '\0';
     arvore = CriaArvoreVazia();
+    *qtd = *qtd + 1;
+    arvore->id = *qtd;
     
     
     while(1){
@@ -51,9 +65,9 @@ Arvore* CriaArvore(char* equacao, char* sinais, char* numeros, int* i){
             *i = *i + 1;
             
             if(!arvore->esquerda){
-                arvore->esquerda = CriaArvore(equacao, sinais, numeros, i);
+                arvore->esquerda = CriaArvore(equacao, sinais, numeros, i, qtd);
             }else{
-                arvore->direita = CriaArvore(equacao, sinais, numeros, i);
+                arvore->direita = CriaArvore(equacao, sinais, numeros, i, qtd);
             }
 
         }
@@ -72,8 +86,10 @@ Arvore* CriaArvore(char* equacao, char* sinais, char* numeros, int* i){
             while(1){
 
                 /* 
-                * Caso encontre um numero, ele verifica nas proximas posicoes da string a existencia de mais numeros, e caso encontre, 
-                * adiciona esse caracter na string, se nao, o loop eh quebrado e logo em seguida a string eh alocada no arvore->valor
+                * Caso encontre um numero, ele verifica nas proximas posicoes 
+                *da string a existencia de mais numeros, e caso encontre, 
+                * adiciona esse caracter na string, se nao, o loop eh quebrado
+                * e logo em seguida a string eh alocada no arvore->valor
                 */
 
                 b = Busca(equacao[*i],numeros);
@@ -91,10 +107,12 @@ Arvore* CriaArvore(char* equacao, char* sinais, char* numeros, int* i){
         // Toda vez que um parentese eh fechado o loop while eh quebrado e a arvore eh retornada
         if(equacao[*i] == ')') {
             *i = *i + 1;
+            free(a);
             break;
         }
         //Caso o indice seja maior ou igual ao tamanho da string da equacao, o loop while eh quebrado e a arvore eh 
         if(*i >= strlen(equacao)-1){
+            free(a);
             break;
         }  
     }
@@ -104,7 +122,7 @@ Arvore* CriaArvore(char* equacao, char* sinais, char* numeros, int* i){
 float LeECalculaArvore(Arvore* a, float res, char* sinais){
     int i;
     if(Busca(*(a->valor), sinais) != 'n'){ 
-        //Se a arvore em questao for um sinal, eh verificado o sinal e eh chamada recursivamente a funcao
+        //Se a arvore em questao for um sinal, eh verificado o sinal e eh chamada recursivamente a funcao, mandando dessa vez, a arvore esquerda e direita.
         if(Busca(*(a->valor), sinais) == '+'){
             res = LeECalculaArvore(a->esquerda, res, sinais) + LeECalculaArvore(a->direita, res, sinais);
         }
@@ -126,3 +144,60 @@ float LeECalculaArvore(Arvore* a, float res, char* sinais){
     }
     return res;
 }
+
+void DestroiArvore(Arvore* a){
+
+    /*
+    *Caso a arvore exista faz a liberacao de seu valor, alocado pelo strdup, 
+    *logo em seguida eh utilizada recursao para liberar as arvores pela esquerda e direita.
+    *Apos isso, a arvore eh liberada
+    */
+
+    if(a){
+        free(a->valor);
+        DestroiArvore(a->esquerda);
+        DestroiArvore(a->direita);
+        free(a);
+    }
+}
+
+void ImprimeArvore(FILE *dot, Arvore* a, char* sinais, char* numeros, int *contador, int *qtd){
+    /* Foi utilizado um contador para fazer controle de prints especificos que marcam inicio e fim de certa arvore. 
+     * Eh printado os dados da arvore e logo em seguida, utilizando recursao, eh printada informacoes das arvores à esquerda e direita,
+     * caso exista alguma, e o contador soma +1. Caso o contador for  maior ou igual a qtd(quantidade de arvores) eh printado o "}", que marca o fim da arvore.
+    */
+
+    if(a){
+        if(*contador == 0){
+            fprintf(dot, "strict graph {\n");
+            *contador += 1;
+        }
+        fprintf(dot, "no%d[label=", a->id);
+
+        if(Busca(*(a->valor), sinais) != 'n'){
+            fprintf(dot, "%c%s%c];\n", '"', a->valor, '"');
+        }
+
+        if(Busca(*(a->valor), numeros) != 'n'){
+            fprintf(dot, "%s];\n", a->valor);
+        }
+        
+        if(a->esquerda){
+            fprintf(dot, "no%d--no%d;\n", a->id, a->esquerda->id);
+            ImprimeArvore(dot, a->esquerda, sinais, numeros, contador, qtd);
+            *contador += 1;
+        }
+
+        if(a->direita){
+            fprintf(dot, "no%d--no%d;\n", a->id, a->direita->id);
+            ImprimeArvore(dot, a->direita, sinais, numeros, contador, qtd);
+            *contador += 1;
+        }
+
+        if(*contador >= *qtd){
+            fprintf(dot, "}\n");
+        }
+    }
+}
+
+
