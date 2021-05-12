@@ -49,7 +49,7 @@ Arvore* CriaArvore(char* equacao, char* sinais, char* numeros, int* i, int *qtd)
     Arvore *arvore;
     int cont = 1;
     char b;
-    char* a = (char*)malloc(5 * sizeof(char)); 
+    char* a = (char*)malloc(5 * sizeof(char)); // Os algarismos da equacao so podem ter ate 5 digitos.
     a[1] = '\0';
     a[2] = '\0';
     a[3] = '\0';
@@ -110,7 +110,7 @@ Arvore* CriaArvore(char* equacao, char* sinais, char* numeros, int* i, int *qtd)
             free(a);
             break;
         }
-        //Caso o indice seja maior ou igual ao tamanho da string da equacao, o loop while eh quebrado e a arvore eh 
+        //Caso o indice seja maior ou igual ao tamanho da string da equacao, o loop while eh quebrado e a arvore eh retornada
         if(*i >= strlen(equacao)-1){
             free(a);
             break;
